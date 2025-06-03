@@ -14,7 +14,18 @@ int** init2dMaze(int row,int column){
     return maze;
 
 }
-
+void drawMaze(int** maze, int row, int column){
+    for(int i = 0; i < row; i++){
+        for(int j = 0; j < column; j++){
+            if(maze[i][j] == 1){
+                printf("#");
+            } else {
+                printf(" ");
+            }
+        }
+        printf("\n");
+    }
+}
 int main(){
     
 }
