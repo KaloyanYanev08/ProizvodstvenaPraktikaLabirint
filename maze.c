@@ -14,6 +14,7 @@ int** init2dMaze(int row,int column){
     return maze;
 
 }
+
 void drawMaze(int** maze, int row, int column){
     for(int i = 0; i < row; i++){
         for(int j = 0; j < column; j++){
@@ -25,6 +26,13 @@ void drawMaze(int** maze, int row, int column){
         }
         printf("\n");
     }
+}
+
+void freeMaze(int** maze, int row){
+    for(int i = 0; i < row; i++){
+        free(maze[i]);
+    }
+    free(maze);
 }
 int main(){
     
