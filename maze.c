@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 typedef struct Node Node;
 
@@ -20,11 +19,11 @@ typedef struct Node {
 } Node;
 
 
-Node** init2dMaze(int column, int row) {
-    Node** maze = malloc(column * sizeof(Node*));
-    for (int i = 0; i < column; i++) {
-        maze[i] = malloc(row * sizeof(Node));
-        for (int j = 0; j < row; j++) {
+Node** init2dMaze(int row, int column) {
+    Node** maze = malloc(row * sizeof(Node*));
+    for (int i = 0; i < row; i++) {
+        maze[i] = malloc(column * sizeof(Node));
+        for (int j = 0; j < column; j++) {
             if (i % 2 == 1 && j % 2 == 1) {
                 maze[i][j].type = CELL;
             } else {
@@ -44,8 +43,8 @@ Node** init2dMaze(int column, int row) {
     }
 
     // Set cell-to-cell connections and wall references
-    for (int i = 1; i < column; i += 2) {
-        for (int j = 1; j < row; j += 2) {
+    for (int i = 1; i < row; i += 2) {
+        for (int j = 1; j < column; j += 2) {
             Node* current = &maze[i][j];
 
             if (i - 2 > 0 && maze[i - 2][j].type == CELL) {
@@ -53,7 +52,7 @@ Node** init2dMaze(int column, int row) {
                 current->up.wall = &maze[i - 1][j];
             }
 
-            if (i + 2 < column && maze[i + 2][j].type == CELL) {
+            if (i + 2 < row && maze[i + 2][j].type == CELL) {
                 current->down.neighbor = &maze[i + 2][j];
                 current->down.wall = &maze[i + 1][j];
             }
@@ -63,7 +62,7 @@ Node** init2dMaze(int column, int row) {
                 current->left.wall = &maze[i][j - 1];
             }
 
-            if (j + 2 < row && maze[i][j + 2].type == CELL) {
+            if (j + 2 < column && maze[i][j + 2].type == CELL) {
                 current->right.neighbor = &maze[i][j + 2];
                 current->right.wall = &maze[i][j + 1];
             }
@@ -107,9 +106,9 @@ void recursiveBacktrackingMazeGenerate(Node* current) {
     }
 }
 
-void drawMaze(Node** maze, int column, int row){
-    for(int i = 0; i < column; i++){
-        for(int j = 0; j < row; j++){
+void drawMaze(Node** maze, int row, int column){
+    for(int i = 0; i < row; i++){
+        for(int j = 0; j < column; j++){
             if(maze[i][j].type == WALL){
                 printf("⬜ ");
             } else {
@@ -120,13 +119,23 @@ void drawMaze(Node** maze, int column, int row){
     }
 }
 
-void freeMaze(Node** maze, int column){
-    for(int i = 0; i < column; i++){
+void freeMaze(Node** maze, int row){
+    for(int i = 0; i < row; i++){
         free(maze[i]);
     }
     free(maze);
 }
 
-int main(){
-    
+int main() {
+    int column = 21;
+    int row = 11;
+    srand(time(NULL));
+
+    Node** maze = init2dMaze(row, column);
+    Node* start = &maze[1][1];
+
+    recursiveBacktrackingMazeGenerate(start);
+
+    drawMaze(maze, row, column);
+
 }
