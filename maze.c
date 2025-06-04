@@ -127,6 +127,76 @@ void freeMaze(Node** maze, int column){
     free(maze);
 }
 
+typedef enum {
+    UP=0,
+    RIGHT,
+    DOWN,
+    LEFT
+}Direction;
+
+typedef struct{
+    Node* position;
+    Direction direction;
+} Cursor;
+
+CellConnection* getConnection(Node* node, Direction direction) {
+    switch (direction) {
+        case UP: return &node->up; break;
+        case RIGHT: return &node->right; break;
+        case DOWN: return &node->down; break;
+        case LEFT: return &node->left; break;
+        default: return NULL;
+    }
+}
+
+void rightWallHugging(Node* start, Node* dest){
+    Cursor cursor;
+    cursor.position = start;
+    cursor.direction = RIGHT;
+
+    while(cursor.position != dest){
+        CellConnection* connection = getConnection(cursor.position, cursor.direction);
+        CellConnection* connectionRight = getConnection(cursor.position, (cursor.direction + 1) % 4);
+
+        if (connectionRight && connectionRight->neighbor && connectionRight->wall->type == CELL) {
+            cursor.position = connectionRight->neighbor;
+            cursor.direction = (cursor.direction + 1) % 4;
+        } else if (connection && connection->neighbor && connection->wall->type == CELL) {
+            cursor.position = connection->neighbor;
+        } else {
+            cursor.direction = (cursor.direction + 1) % 4;
+        }
+    }
+}
+
+void dfsTraverseHelper(Cursor cursor, Node* dest, int* found) {
+    if (*found) return;
+
+    cursor.position->visited = 1;
+    if (cursor.position == dest) {
+        *found = 1;
+        return;
+    }
+
+    for (Direction dir = UP; dir <= LEFT; dir++) {
+        CellConnection* connection = getConnection(cursor.position, dir);
+        if (connection && connection->neighbor && connection->wall->type == CELL && connection->neighbor->visited == 0) {
+            Cursor newCursor = cursor;
+            newCursor.position = connection->neighbor;
+            newCursor.direction = dir;
+            dfsTraverseHelper(newCursor, dest, found);
+        }
+    }
+}
+
+void dfsTraverse(Node* start, Node* dest){
+    int found = 0;
+    Cursor cursor;
+    cursor.position = start;
+    cursor.direction = UP;
+    dfsTraverseHelper(cursor, dest, &found);
+}
+
 int main(){
     
 }
