@@ -72,17 +72,21 @@ Node** init2dMaze(int row, int column) {
     return maze;
 }
 
+unsigned int nextRandom(unsigned int* seed) {
+    *seed = *seed * 1103515245 + 12345;
+    return *seed;
+}
 
-void shuffle(CellConnection** dirs, int count) {
+void shuffle(CellConnection** dirs, int count, unsigned int* seed) {
     for (int i = count - 1; i > 0; i--) {
-        int j = rand() % (i + 1);
+        int j = nextRandom(seed) % (i + 1);
         CellConnection* temp = dirs[i];
         dirs[i] = dirs[j];
         dirs[j] = temp;
     }
 }
 
-void recursiveBacktrackingMazeGenerate(Node* current) {
+void recursiveBacktrackingMazeGenerate(Node* current, unsigned int* seed) {
     current->visited = 1;
 
     // Create a list of pointers to connection structs
@@ -94,14 +98,14 @@ void recursiveBacktrackingMazeGenerate(Node* current) {
     };
 
     // Randomization
-    shuffle(directions, 4);
+    shuffle(directions, 4, seed);
 
     // Explore unvisited neighbors
     for (int i = 0; i < 4; i++) {
         CellConnection* conn = directions[i];
         if (conn->neighbor && !conn->neighbor->visited) {
             conn->wall->type = CELL;           // Make the wall a walkable cell
-            recursiveBacktrackingMazeGenerate(conn->neighbor);
+            recursiveBacktrackingMazeGenerate(conn->neighbor, seed);
         }
     }
 }
@@ -127,15 +131,18 @@ void freeMaze(Node** maze, int row){
 }
 
 int main() {
-    int column = 21;
+    int column = 11;
     int row = 11;
-    srand(time(NULL));
+    unsigned int seed = 12345;
 
     Node** maze = init2dMaze(row, column);
     Node* start = &maze[1][1];
-
-    recursiveBacktrackingMazeGenerate(start);
+    maze[1][0].type = CELL;
+    maze[row-1][column-2].type = CELL;
+    recursiveBacktrackingMazeGenerate(start, &seed);
 
     drawMaze(maze, row, column);
+    freeMaze(maze, row);
+
 
 }
