@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 typedef struct Node Node;
 
@@ -70,6 +71,40 @@ Node** init2dMaze(int column, int row) {
     }
 
     return maze;
+}
+
+
+void shuffle(CellConnection** dirs, int count) {
+    for (int i = count - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        CellConnection* temp = dirs[i];
+        dirs[i] = dirs[j];
+        dirs[j] = temp;
+    }
+}
+
+void recursiveBacktrackingMazeGenerate(Node* current) {
+    current->visited = 1;
+
+    // Create a list of pointers to connection structs
+    CellConnection* directions[4] = {
+        &current->up,
+        &current->down,
+        &current->left,
+        &current->right
+    };
+
+    // Randomization
+    shuffle(directions, 4);
+
+    // Explore unvisited neighbors
+    for (int i = 0; i < 4; i++) {
+        CellConnection* conn = directions[i];
+        if (conn->neighbor && !conn->neighbor->visited) {
+            conn->wall->type = CELL;           // Make the wall a walkable cell
+            recursiveBacktrackingMazeGenerate(conn->neighbor);
+        }
+    }
 }
 
 void drawMaze(Node** maze, int column, int row){
