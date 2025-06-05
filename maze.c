@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
+#include <unistd.h>
 
 typedef struct Node Node;
 
@@ -123,6 +125,21 @@ void drawMaze(Node** maze, int row, int column){
     }
 }
 
+void drawMazeWithPath(Node** maze, int row, int column){
+    for(int i = 0; i < row; i++){
+        for(int j = 0; j < column; j++){
+            if(maze[i][j].type == WALL){
+                printf("⬜ ");
+            } else if (maze[i][j].visited) {
+                printf("⭕ "); // червен квадрат (⬛)
+            } else {
+                printf("⬛ ");
+            }
+        }
+        printf("\n");
+    }
+}
+
 void freeMaze(Node** maze, int row){
     for(int i = 0; i < row; i++){
         free(maze[i]);
@@ -200,17 +217,131 @@ void dfsTraverse(Node* start, Node* dest){
     dfsTraverseHelper(cursor, dest, &found);
 }
 
+Node** maze = NULL;
+unsigned int seed = 12345;
+
+void clearScreen() {
+    printf("\033[2J\033[H");
+    printf("\n\n"); //top line gets cut off for some reason so this is a poor attempt at fixing it
+}
+
+void printMenu() {
+    sleep(1);
+    clearScreen();
+    printf("\n=== МЕНЮ ===\n");
+    printf("1. Генериране на лабиринт\n");
+    printf("2. Четене от файл\n");
+    printf("3. Записване във файл\n");
+    printf("4. Обхождане от потребителя\n");
+    printf("5. Обхождане от компютъра\n");
+    printf("6. Изход\n");
+    printf("Избор: ");
+}
+
+void userTraverse(Node** maze, int row, int column) {
+    int playerRow = 1;
+    int playerCol = 0; // входа
+
+    int endRow = row - 2;
+    int endCol = column - 1; // изхода
+
+    char move;
+
+    // Зануляваме visited
+    for (int i = 0; i < row; i++)
+        for (int j = 0; j < column; j++)
+            maze[i][j].visited = 0;
+
+    maze[playerRow][playerCol].visited = 1;
+
+    while (!(playerRow == endRow && playerCol == endCol)) {
+        clearScreen();
+        drawMazeWithPath(maze, row, column);
+        printf("W/A/S/D + Enter: ");
+        //scanf(" %c", &move);
+        move = getch();
+
+        int newRow = playerRow;
+        int newCol = playerCol;
+
+        if (move == 'w' || move == 'W') newRow--;
+        else if (move == 's' || move == 'S') newRow++;
+        else if (move == 'a' || move == 'A') newCol--;
+        else if (move == 'd' || move == 'D') newCol++;
+        else if (move == 'q') break;
+        else continue;
+
+        if (newRow >= 0 && newRow < row &&
+            newCol >= 0 && newCol < column &&
+            maze[newRow][newCol].type == CELL) {
+            playerRow = newRow;
+            playerCol = newCol;
+            maze[playerRow][playerCol].visited = 1;
+        }
+
+        printf("\n");
+    }
+
+    drawMazeWithPath(maze, row, column);
+    printf("Достигна края на лабиринта!\n");
+}
+
+void saveMazeToFile(Node** maze, int row, int column, const char* filename) {
+    FILE* file = fopen(filename, "w");
+    if (!file) {
+        exit(1);
+        return;
+    }
+
+    fprintf(file, "%d %d\n", row, column);
+
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < column; j++) {
+            fputc(maze[i][j].type == WALL ? '#' : ' ', file);
+        }
+        fputc('\n', file);
+    }
+
+    fclose(file);
+}
+
+
 int main(){
-    int column = 11;
-    int row = 11;
-    unsigned int seed = 12345;
+    int choice;
+    int row=0;
+    int column = 0;
+    while (1) {
+        printMenu();
+        scanf("%d", &choice);
 
-    Node** maze = init2dMaze(row, column);
-    Node* start = &maze[1][1];
-    maze[1][0].type = CELL;
-    maze[row-1][column-2].type = CELL;
-    recursiveBacktrackingMazeGenerate(start, &seed);
+        if(choice == 1) {
+            if(maze != NULL) {
+                freeMaze(maze, row);
+            }
+            do{
+            printf("Въведете брой редове (нечетно число): ");
+            scanf("%d", &row);
+            }while(!(row%2));
+            do{
+            printf("Въведете брой колони (нечетно число): ");
+            scanf("%d", &column);
+            }while(!(column%2));
 
-    drawMaze(maze, row, column);
-    freeMaze(maze, row);
+            maze = init2dMaze(row, column);
+            Node* start = &maze[1][1];
+            maze[1][0].type = CELL;
+            maze[row-2][column-1].type = CELL;
+            recursiveBacktrackingMazeGenerate(start, &seed);
+            drawMaze(maze, row, column);
+
+        }
+        if (choice == 4) {
+    if (maze == NULL) {
+        printf("Първо генерирай лабиринт.\n");
+    } else {
+        userTraverse(maze, row, column);
+    }
+}
+        if(choice==6) break;
+    }
 }
