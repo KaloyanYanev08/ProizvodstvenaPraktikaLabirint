@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <conio.h>
 #include <unistd.h>
+#include <time.h>
 
 typedef struct Node Node;
 
@@ -287,7 +288,6 @@ void dfsTraverse(Cursor cursor, Node* dest, int* found, Node** maze, int row, in
 
 
 Node** maze = NULL;
-unsigned int seed = 12345;
 
 void printMenu() {
     sleep(1);
@@ -361,14 +361,14 @@ void userTraverse(Node** maze, int row, int column) {
 }
 
 
-void saveMazeToFile(Node** maze, int row, int column, const char* filename) {
+void saveMazeToFile(Node** maze, int row, int column, unsigned int seed, const char* filename) {
     FILE* file = fopen(filename, "w");
     if (!file) {
         exit(1);
         return;
     }
 
-    fprintf(file, "%d %d\n", row, column);
+    fprintf(file, "%d %d\n%u\n", row, column, seed);
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < column; j++) {
@@ -380,7 +380,7 @@ void saveMazeToFile(Node** maze, int row, int column, const char* filename) {
     fclose(file);
 }
 
-Node** loadMazeFromFile(const char* filename, int* outRow, int* outColumn) {
+Node** loadMazeFromFile(const char* filename, int* outRow, int* outColumn, unsigned int* outSeed) {
     FILE* file = fopen(filename, "r");
     if (!file) {
         perror("Cannot open file for reading");
@@ -388,9 +388,11 @@ Node** loadMazeFromFile(const char* filename, int* outRow, int* outColumn) {
     }
 
     int row, column;
-    fscanf(file, "%d %d\n", &row, &column);
+    unsigned int seed;
+    fscanf(file, "%d %d\n%u\n", &row, &column, &seed);
     *outRow = row;
     *outColumn = column;
+    *outSeed = seed;
 
     Node** maze = init2dMaze(row, column);
 
@@ -440,6 +442,7 @@ int main() {
     int choice;
     int row = 0;
     int column = 0;
+    unsigned int seed;
 
     while (1) {
         printMenu();
@@ -461,18 +464,34 @@ int main() {
                     scanf("%d", &column);
                 } while (!(column % 2));
 
+                char conformation = '\0';
+                do {
+                    printf("Искате ли да въведете специфичен seed?\nАко не искате ще се генерира случаен такъв (y-да,n-не): ");
+                    scanf(" %c",&conformation);
+                } while (conformation != 'y' && conformation !='Y' && conformation != 'n' && conformation != 'N');
+
+                if (conformation == 'y' || conformation == 'Y') {
+                    printf("Въведете стойността на seed: ");
+                    scanf("%u", &seed);
+                } else {
+                    seed = (unsigned int)time(NULL);
+                }
+                printf("\n");
+
                 maze = init2dMaze(row, column);
                 maze[1][0].type = CELL;                   // вход
                 maze[row - 2][column - 1].type = CELL;     // изход
                 recursiveBacktrackingMazeGenerate(&maze[1][1], &seed);
                 drawMaze(maze, row, column);
+                printf("\nРазмери: %dx%d", column, row);
+                printf("\nSeed: %u",seed);
                 break;
 
             case 2:
                 if (maze != NULL) {
                     freeMaze(maze, row);
                 }
-                maze = loadMazeFromFile("maze.txt", &row, &column);
+                maze = loadMazeFromFile("maze.txt", &row, &column, &seed);
                 if (maze) {
                     printf("Лабиринтът е зареден успешно.\n");
                     drawMaze(maze, row, column);
@@ -483,7 +502,7 @@ int main() {
                 if (maze == NULL) {
                     printf("Няма лабиринт за запис.\n");
                 } else {
-                    saveMazeToFile(maze, row, column, "maze.txt");
+                    saveMazeToFile(maze, row, column, seed, "maze.txt");
                     printf("Лабиринтът е записан успешно.\n");
                 }
                 break;
