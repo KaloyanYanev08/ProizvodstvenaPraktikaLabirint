@@ -1,5 +1,5 @@
-#ifndef PATHFINDER_H
-#define PATHFINDER_H
+#ifndef PATHFINDING_H
+#define PATHFINDING_H
 
 #include "mazeGen.h"
 
