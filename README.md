@@ -12,5 +12,13 @@ Ensure you have **GCC installed** (MinGW for Windows). Then, open a terminal in 
 
 ```bash
 gcc maze.c mazeGen.c pathFinding.c UI.c -o maze.exe
+If you are using CMD run the commands:
+chcp 65001
+maze.exe
+If you are using PowerShell run the commands:
+chcp 65001
+$OutputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new()
 .\maze.exe
+```
+The two commands after you make the maze.exe file are for forcing the CMD and Powershell to use the UTF-8 encoding so that the maze displays as it should.
 
